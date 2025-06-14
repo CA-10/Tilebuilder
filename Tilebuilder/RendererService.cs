@@ -53,6 +53,18 @@ public class RendererService : IRendererService
 			delta = RayMath.Vector2Scale(delta, -1.0f / camera.zoom);
 			camera.target = RayMath.Vector2Add(camera.target, delta);
 		}
+
+		float wheel = Raylib.GetMouseWheelMove();
+
+		if (wheel != 0)
+		{
+			Vector2 mouseWorldPos = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), camera);
+			camera.offset = Raylib.GetMousePosition();
+			camera.target = mouseWorldPos;
+
+			float scale = 0.2f * wheel;
+			camera.zoom = RayMath.Clamp((float)Math.Exp(Math.Log(camera.zoom) + scale), 0.125f, 40.0f);
+		}
 	}
 
 	public Camera2D Camera
