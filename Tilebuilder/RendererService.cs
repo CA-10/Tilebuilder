@@ -5,19 +5,22 @@ namespace Tilebuilder;
 
 public class RendererService : IRendererService
 {
+	private ITilemapService _tilemapService;
+
 	private static RendererService? instance = null;
 	private Camera2D camera;
 
-	public RendererService()
+	public RendererService(ITilemapService tilemapService)
 	{
 		camera = new Camera2D();
 		camera.zoom = 1.0f;
+		_tilemapService = tilemapService;
 	}
 
-	public static RendererService GetInstance()
+	public static RendererService GetInstance(ITilemapService tilemapService)
 	{
 		if (instance is null)
-			instance = new RendererService();
+			instance = new RendererService(tilemapService);
 
 		return instance;
 	}
@@ -36,11 +39,26 @@ public class RendererService : IRendererService
 
 	private void RenderGrid()
 	{
-		for (int x = 0; x < 1000; x += Constants.CellSize)
+		Vector2 topLeft = Raylib.GetScreenToWorld2D(new Vector2(0, 0), camera);
+		Vector2 bottomRight = Raylib.GetScreenToWorld2D(new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight()), camera);
+
+		int startX = Math.Max(0, (int)Math.Floor(topLeft.X / Constants.CellSize));
+		int endX = Math.Min(Constants.gridWidth - 1, (int)Math.Floor(bottomRight.X / Constants.CellSize));
+
+		int startY = Math.Max(0, (int)Math.Floor(topLeft.Y / Constants.CellSize));
+		int endY = Math.Min(Constants.gridHeight - 1, (int)Math.Floor(bottomRight.Y / Constants.CellSize));
+
+		//Uses occlusion culling
+		for (int x = startX; x <= endX; x++)
 		{
-			for (int y = 0; y < 1000; y+= Constants.CellSize)
+			for (int y = startY; y <= endY; y++)
 			{
-				Raylib.DrawRectangleLines(x, y, Constants.CellSize, Constants.CellSize, Raylib.BLACK);
+				Color color = (_tilemapService.Tilemap[x][y] == 1) ? Raylib.RED : Raylib.BLACK;
+
+				int worldX = x * Constants.CellSize;
+				int worldY = y * Constants.CellSize;
+
+				Raylib.DrawRectangleLines(worldX, worldY, Constants.CellSize, Constants.CellSize, color);
 			}
 		}
 	}
